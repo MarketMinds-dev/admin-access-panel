@@ -21,9 +21,18 @@ type Center = {
   location: string;
 };
 
+type StoreData = {
+  id: number;
+  name: string;
+  center_id: number;
+  created_at: string;
+  updated_at: string;
+  center: Center;
+};
+
 type AddStoreModalProps = {
   centers: Center[];
-  onStoreAdded: (newStore: any) => void;
+  onStoreAdded: (newStore: StoreData) => void;
 };
 
 export function AddStoreModal({ centers, onStoreAdded }: AddStoreModalProps) {
@@ -83,7 +92,8 @@ export function AddStoreModal({ centers, onStoreAdded }: AddStoreModalProps) {
         <DialogHeader>
           <DialogTitle>Add New Store</DialogTitle>
           <DialogDescription>
-            Enter the details for the new store. Click save when you're done.
+            Enter the details for the new store. Click save when you&apos;re
+            done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

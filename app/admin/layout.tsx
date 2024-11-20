@@ -6,7 +6,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import NavigationBar from "@/components/navbar";
+import { AddStoreModal } from "@/components/navbar";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   items: {
