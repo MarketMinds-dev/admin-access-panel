@@ -1,25 +1,26 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import * as React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  Calendar,
+  RefreshCw,
+  Printer,
+  Edit,
+  MoreVertical,
+  Loader2,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-type Center = {
-  id: number;
-  name: string;
-  location: string;
-};
+import { useEffect, useState, useCallback } from "react";
+import { AddStoreModal } from "./add-store-modal";
 
 type Store = {
   store_id: number;
@@ -29,118 +30,177 @@ type Store = {
   center_location: string;
 };
 
-type AddStoreModalProps = {
-  centers: Center[];
-  onStoreAdded: (newStore: Store) => void;
+type Center = {
+  id: number;
+  name: string;
+  location: string;
 };
 
-export function AddStoreModal({ centers, onStoreAdded }: AddStoreModalProps) {
-  const [storeName, setStoreName] = useState("");
-  const [selectedCenter, setSelectedCenter] = useState<number | null>(null);
-  const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+export default function NavigationBar() {
+  const [timeRange, setTimeRange] = React.useState("Last 7 Days");
+  const [commonTimeline, setCommonTimeline] = React.useState(false);
+  const [stores, setStores] = useState<Store[]>([]);
+  const [centers, setCenters] = useState<Center[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const supabase = createClientComponentClient();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!storeName || !selectedCenter) return;
+  const fetchData = useCallback(async () => {
+    setIsRefreshing(true);
+    const { data: storesData, error: storesError } = await supabase
+      .from("store_center_view")
+      .select("*");
 
-    setIsLoading(true);
+    const { data: centersData, error: centersError } = await supabase
+      .from("centers")
+      .select("*");
 
-    const { data, error } = await supabase
-      .from("stores")
-      .insert({ name: storeName, center_id: selectedCenter })
-      .select("*, centers(*)")
-      .single();
-
-    setIsLoading(false);
-
-    if (error) {
-      console.error("Error adding store:", error);
-      // Handle error (e.g., show error message to user)
-    } else if (data) {
-      const newStore: Store = {
-        store_id: data.id,
-        store_name: data.name,
-        center_id: data.center_id,
-        center_name: data.centers.name,
-        center_location: data.centers.location,
-      };
-      onStoreAdded(newStore);
-      setIsOpen(false);
-      setStoreName("");
-      setSelectedCenter(null);
+    if (storesError) {
+      console.error("Error fetching stores:", storesError);
+    } else if (storesData) {
+      setStores(storesData);
+      if (storesData.length > 0 && !selectedStore) {
+        setSelectedStore(storesData[0]);
+      }
     }
-  };
+
+    if (centersError) {
+      console.error("Error fetching centers:", centersError);
+    } else if (centersData) {
+      setCenters(centersData);
+    }
+
+    setLoading(false);
+    setIsRefreshing(false);
+  }, [supabase, selectedStore]);
+
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  const handleStoreAdded = useCallback((newStore: Store) => {
+    setStores((prevStores) => [...prevStores, newStore]);
+    setSelectedStore(newStore);
+  }, []);
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="h-4 w-4"
-          >
-            <path d="M5 12h14" />
-            <path d="M12 5v14" />
-          </svg>
-          <span className="sr-only">Add new store</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Add New Store</DialogTitle>
-          <DialogDescription>
-            Enter the details for the new store. Click save when you&apos;re
-            done.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleSubmit}>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="store-name" className="text-right">
-                Store Name
-              </Label>
-              <Input
-                id="store-name"
-                value={storeName}
-                onChange={(e) => setStoreName(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="center" className="text-right">
-                Center
-              </Label>
-              <select
-                id="center"
-                value={selectedCenter || ""}
-                onChange={(e) => setSelectedCenter(Number(e.target.value))}
-                className="col-span-3"
-              >
-                <option value="">Select a center</option>
-                {centers.map((center) => (
-                  <option key={center.id} value={center.id}>
-                    {center.name} - {center.location}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? "Adding..." : "Add Store"}
+    <header className="flex h-14 items-center gap-4 border-b bg-background px-6">
+      <div className="flex flex-1 items-center gap-2">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              className="w-[280px] justify-start text-sm"
+            >
+              {loading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : selectedStore ? (
+                <>
+                  {selectedStore.store_name}
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    <span className="inline-block max-w-[120px] truncate">
+                      {selectedStore.center_name}
+                    </span>
+                    {" - "}
+                    <span className="inline-block max-w-[60px] truncate">
+                      {selectedStore.center_location}
+                    </span>
+                  </span>
+                </>
+              ) : (
+                "Select a store"
+              )}
+              <span className="sr-only">Select store</span>
             </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" className="w-[280px]">
+            {stores.map((store) => (
+              <DropdownMenuItem
+                key={store.store_id}
+                onSelect={() => setSelectedStore(store)}
+              >
+                <span>{store.store_name}</span>
+                <span className="ml-auto text-xs text-muted-foreground">
+                  {store.center_name} - {store.center_location}
+                </span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <AddStoreModal centers={centers} onStoreAdded={handleStoreAdded} />
+      </div>
+
+      <div className="flex items-center gap-4">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="gap-2">
+              <Calendar className="h-4 w-4" />
+              {timeRange}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setTimeRange("Last 24 Hours")}>
+              Last 24 Hours
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeRange("Last 7 Days")}>
+              Last 7 Days
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeRange("Last 30 Days")}>
+              Last 30 Days
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setTimeRange("Custom Range")}>
+              Custom Range
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="flex items-center gap-2">
+          <Switch
+            id="timeline-mode"
+            checked={commonTimeline}
+            onCheckedChange={setCommonTimeline}
+          />
+          <label
+            htmlFor="timeline-mode"
+            className="text-sm text-muted-foreground"
+          >
+            common timeline
+          </label>
+        </div>
+
+        <Separator orientation="vertical" className="h-6" />
+
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={fetchData}
+            disabled={isRefreshing}
+          >
+            {isRefreshing ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4" />
+            )}
+            <span className="sr-only">Refresh data</span>
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Printer className="h-4 w-4" />
+            <span className="sr-only">Print view</span>
+          </Button>
+          <Button variant="ghost" size="icon">
+            <Edit className="h-4 w-4" />
+            <span className="sr-only">Edit view</span>
+          </Button>
+          <Button variant="ghost" size="icon">
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">More options</span>
+          </Button>
+        </div>
+      </div>
+    </header>
   );
 }

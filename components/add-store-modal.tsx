@@ -21,18 +21,17 @@ type Center = {
   location: string;
 };
 
-type StoreData = {
-  id: number;
-  name: string;
+type Store = {
+  store_id: number;
+  store_name: string;
   center_id: number;
-  created_at: string;
-  updated_at: string;
-  center: Center;
+  center_name: string;
+  center_location: string;
 };
 
 type AddStoreModalProps = {
   centers: Center[];
-  onStoreAdded: (newStore: StoreData) => void;
+  onStoreAdded: (newStore: Store) => void;
 };
 
 export function AddStoreModal({ centers, onStoreAdded }: AddStoreModalProps) {
@@ -61,7 +60,14 @@ export function AddStoreModal({ centers, onStoreAdded }: AddStoreModalProps) {
       console.error("Error adding store:", error);
       // Handle error (e.g., show error message to user)
     } else if (data) {
-      onStoreAdded(data);
+      const newStore: Store = {
+        store_id: data.id,
+        store_name: data.name,
+        center_id: data.center_id,
+        center_name: data.centers.name,
+        center_location: data.centers.location,
+      };
+      onStoreAdded(newStore);
       setIsOpen(false);
       setStoreName("");
       setSelectedCenter(null);
