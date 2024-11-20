@@ -41,13 +41,6 @@ type CustomerFootfall = {
   store: Store;
 };
 
-type Employee = {
-  id: number;
-  name: string;
-  store_id: number;
-  created_at: string;
-};
-
 type ProcessedEmployeeData = {
   date: string;
   store_name: string;
