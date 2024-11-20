@@ -15,7 +15,7 @@ import { AlertTriangle } from "lucide-react";
 
 export default function CashDrawerControl() {
   const [isOpen, setIsOpen] = useState(false);
-  const [employeePresent, setEmployeePresent] = useState(true);
+  const [employeePresent] = useState(false); // Updated line
 
   const handleOpenDrawer = () => {
     setIsOpen(true);
