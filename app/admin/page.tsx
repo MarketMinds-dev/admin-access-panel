@@ -32,6 +32,12 @@ type EmployeeFootfall = {
   [key: string]: number | string;
 };
 
+type EmployeeFootfallRaw = {
+  date: string;
+  employees: { name: string }[];
+  entries: number;
+};
+
 type CriticalViolation = {
   id: number;
   event_name: string;
@@ -39,23 +45,31 @@ type CriticalViolation = {
   event_time: string;
 };
 
-type EmployeeFootfallRaw = {
-  date: string;
-  employees: { name: string };
-  entries: number;
+type ViolationAnalysis = {
+  cashbox_offence: number;
+  door_state: number;
+  no_employee: number;
+  total_score: number;
 };
 
 export default function AdminDashboard() {
   const [customerData, setCustomerData] = useState<CustomerFootfall[]>([]);
   const [employeeData, setEmployeeData] = useState<EmployeeFootfall[]>([]);
   const [violationsData, setViolationsData] = useState<CriticalViolation[]>([]);
+  const [violationAnalysis, setViolationAnalysis] = useState<ViolationAnalysis>(
+    {
+      cashbox_offence: 3,
+      door_state: 1,
+      no_employee: 71,
+      total_score: 75,
+    }
+  );
   const [loading, setLoading] = useState(true);
 
   const supabase = createClientComponentClient();
 
   useEffect(() => {
     async function fetchData() {
-      // Fetch customer footfall data
       const { data: customerFootfall, error: customerError } = await supabase
         .from("customer_footfall")
         .select("date, entries");
@@ -66,7 +80,6 @@ export default function AdminDashboard() {
         setCustomerData(customerFootfall);
       }
 
-      // Fetch employee footfall data
       const { data: employeeFootfall, error: employeeError } =
         await supabase.from("employee_footfall").select(`
           date,
@@ -82,16 +95,21 @@ export default function AdminDashboard() {
         ).reduce((acc, curr) => {
           const existingEntry = acc.find((item) => item.date === curr.date);
           if (existingEntry) {
-            existingEntry[curr.employees.name] = curr.entries;
+            curr.employees.forEach((emp) => {
+              existingEntry[emp.name] = curr.entries;
+            });
           } else {
-            acc.push({ date: curr.date, [curr.employees.name]: curr.entries });
+            const newEntry: EmployeeFootfall = { date: curr.date };
+            curr.employees.forEach((emp) => {
+              newEntry[emp.name] = curr.entries;
+            });
+            acc.push(newEntry);
           }
           return acc;
         }, [] as EmployeeFootfall[]);
         setEmployeeData(processedEmployeeData);
       }
 
-      // Fetch critical violations data
       const { data: violations, error: violationsError } = await supabase
         .from("critical_violations")
         .select("*");
@@ -157,33 +175,79 @@ export default function AdminDashboard() {
           </Card>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>CriticalViolations(All Stores)</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Event Name</TableHead>
-                  <TableHead>Resource Name</TableHead>
-                  <TableHead>Event Time</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {violationsData.map((violation) => (
-                  <TableRow key={violation.id}>
-                    <TableCell>{violation.id}</TableCell>
-                    <TableCell>{violation.event_name}</TableCell>
-                    <TableCell>{violation.resource_name}</TableCell>
-                    <TableCell>{violation.event_time}</TableCell>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>CriticalViolations(All Stores)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>ID</TableHead>
+                    <TableHead>Event Name</TableHead>
+                    <TableHead>Resource Name</TableHead>
+                    <TableHead>Event Time</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+                </TableHeader>
+                <TableBody>
+                  {violationsData.map((violation) => (
+                    <TableRow key={violation.id}>
+                      <TableCell>{violation.id}</TableCell>
+                      <TableCell>{violation.event_name}</TableCell>
+                      <TableCell>{violation.resource_name}</TableCell>
+                      <TableCell>{violation.event_time}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Violation Analysis(All Stores)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                <div className="space-y-2">
+                  <div className="text-2xl font-bold text-center text-red-500">
+                    {violationAnalysis.total_score.toFixed(2)}
+                  </div>
+                  <div className="text-sm text-center text-muted-foreground">
+                    Event Score
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">
+                      CASHBOX_OFFENCE_DETECTED
+                    </span>
+                    <span className="text-sm text-red-500">
+                      {violationAnalysis.cashbox_offence.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">
+                      DOOR_STATE_DETECTED
+                    </span>
+                    <span className="text-sm text-red-500">
+                      {violationAnalysis.door_state.toFixed(2)}
+                    </span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">
+                      NO_EMPLOYEE_DETECTED
+                    </span>
+                    <span className="text-sm text-red-500">
+                      {violationAnalysis.no_employee.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
