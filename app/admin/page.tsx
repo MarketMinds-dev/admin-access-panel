@@ -30,8 +30,8 @@ import {
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Store } from "@/types";
 import { Button } from "@/components/ui/button";
+import type { Store } from "@/types";
 
 // Types
 type Employee = {
