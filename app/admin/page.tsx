@@ -81,7 +81,7 @@ type ViolationAnalysis = {
 };
 
 interface AdminDashboardProps {
-  selectedStore: Store | null;
+  selectedStore?: Store | null; // Adjust type to optional if necessary
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ selectedStore }) => {
