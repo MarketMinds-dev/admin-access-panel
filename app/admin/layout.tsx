@@ -8,7 +8,8 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import NavigationBar from "@/components/navbar";
-import AdminDashboard, { Store } from "./page";
+import AdminDashboard from "./page";
+import { Store } from "@/types";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   items: {

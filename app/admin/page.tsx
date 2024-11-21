@@ -29,13 +29,9 @@ import {
 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Store } from "@/types";
 
 // Types
-export type Store = {
-  store_id: number;
-  store_name: string;
-  center_id: number;
-};
 
 type Employee = {
   id: number;
