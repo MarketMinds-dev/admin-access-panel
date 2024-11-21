@@ -14,20 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
-
-type Center = {
-  id: number;
-  name: string;
-  location: string;
-};
-
-type Store = {
-  store_id: number;
-  store_name: string;
-  center_id: number;
-  center_name: string;
-  center_location: string;
-};
+import { Store, Center } from "@/types";
 
 type AddStoreModalProps = {
   centers: Center[];

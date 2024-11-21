@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ReactNode } from "react";
 import Link from "next/link";
@@ -7,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import NavigationBar from "@/components/navbar";
+import AdminDashboard, { Store } from "./page";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   items: {
@@ -44,6 +46,8 @@ function Sidebar({ className, items, ...props }: SidebarProps) {
 }
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
+
   const sidebarNavItems = [
     {
       title: "Overview",
@@ -73,14 +77,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <NavigationBar />
+      <NavigationBar onStoreSelect={setSelectedStore} />
       <div className="flex flex-1 overflow-hidden">
         <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
           <ScrollArea className="h-full">
             <Sidebar items={sidebarNavItems} className="p-4" />
           </ScrollArea>
         </aside>
-        <main className="flex-1 overflow-y-auto p-8">{children}</main>
+        <main className="flex-1 overflow-y-auto p-8">
+          {selectedStore ? (
+            <AdminDashboard selectedStore={selectedStore} />
+          ) : (
+            children
+          )}
+        </main>
       </div>
     </div>
   );
