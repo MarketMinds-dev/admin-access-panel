@@ -56,7 +56,7 @@ type EmployeeFootfall = {
   date: string;
   entries: number;
   created_at: string;
-  employees?: Employee;
+  employee?: Employee;
 };
 
 type ProcessedEmployeeData = {
@@ -111,11 +111,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     async function fetchData() {
-      if (!selectedStore) {
-        setError("No store selected");
-        setLoading(false);
-        return;
-      }
+      if (!selectedStore) return;
 
       setLoading(true);
       setError(null);
@@ -133,7 +129,7 @@ const AdminDashboard: React.FC = () => {
               .select(
                 `
               *,
-              employees (
+              employee:employees (
                 id,
                 name,
                 store_id,
@@ -163,7 +159,7 @@ const AdminDashboard: React.FC = () => {
           const existingEntry = processedData.find(
             (item) => item.date === entry.date
           );
-          const employeeName = entry.employees?.name || "Unknown Employee";
+          const employeeName = entry.employee?.name || "Unknown Employee";
 
           if (existingEntry) {
             existingEntry[employeeName] =
@@ -221,17 +217,7 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, [supabase, selectedStore]);
 
-  if (!selectedStore) {
-    return (
-      <Alert variant="destructive">
-        <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error</AlertTitle>
-        <AlertDescription>
-          No store selected. Please select a store to view the dashboard.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+  if (!selectedStore) return <div>Please select a store</div>;
 
   if (loading) {
     return (
@@ -274,7 +260,6 @@ const AdminDashboard: React.FC = () => {
             <CardTitle>Customer Footfall</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />
-              <span className="sr-only">More options</span>
             </Button>
           </CardHeader>
           <CardContent>
@@ -288,12 +273,10 @@ const AdminDashboard: React.FC = () => {
                   <Legend />
                   <Bar
                     dataKey="entries"
-                    fill="hsl(var(--primary))"
+                    fill="#ff69b4"
                     name="Entries"
                     label={
-                      showDataLabels
-                        ? { position: "top", fill: "hsl(var(--foreground))" }
-                        : false
+                      showDataLabels ? { position: "top", fill: "#000" } : false
                     }
                   />
                 </BarChart>
@@ -317,7 +300,6 @@ const AdminDashboard: React.FC = () => {
             <CardTitle>Employee Footfall</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />
-              <span className="sr-only">More options</span>
             </Button>
           </CardHeader>
           <CardContent>
@@ -338,7 +320,7 @@ const AdminDashboard: React.FC = () => {
                       name={employee}
                       label={
                         showDataLabels
-                          ? { position: "top", fill: "hsl(var(--foreground))" }
+                          ? { position: "top", fill: "#000" }
                           : false
                       }
                     />
@@ -366,17 +348,16 @@ const AdminDashboard: React.FC = () => {
             <CardTitle>Violation Analysis</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />
-              <span className="sr-only">More options</span>
             </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              <div className="bg-muted p-6 rounded-lg">
+              <div className="bg-gray-50 p-6 rounded-lg">
                 <div className="text-center space-y-2">
-                  <div className="text-4xl font-bold text-primary">
+                  <div className="text-4xl font-bold text-red-500">
                     {violationAnalysis.total_count}
                   </div>
-                  <div className="text-xl text-primary">Total Violations</div>
+                  <div className="text-xl text-red-500">Total Violations</div>
                 </div>
               </div>
               <div className="space-y-4">
@@ -385,12 +366,12 @@ const AdminDashboard: React.FC = () => {
                     key !== "total_count" && (
                       <div
                         key={key}
-                        className="flex justify-between items-center bg-muted p-4 rounded"
+                        className="flex justify-between items-center bg-gray-50 p-4 rounded"
                       >
-                        <span className="font-medium text-primary">
-                          {key.replace(/_/g, " ").toUpperCase()}
+                        <span className="font-medium text-red-500">
+                          {key.toUpperCase()}
                         </span>
-                        <span className="text-primary">{value}</span>
+                        <span className="text-red-500">{value}</span>
                       </div>
                     )
                 )}
@@ -404,14 +385,13 @@ const AdminDashboard: React.FC = () => {
             <CardTitle>Critical Violations</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />
-              <span className="sr-only">More options</span>
             </Button>
           </CardHeader>
           <CardContent>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px]">ID</TableHead>
+                  <TableHead>ID</TableHead>
                   <TableHead>Event Name</TableHead>
                   <TableHead>Resource Name</TableHead>
                   <TableHead>Event Time</TableHead>
@@ -425,7 +405,7 @@ const AdminDashboard: React.FC = () => {
                     onClick={() => toggleEventExpansion(violation.event_name)}
                   >
                     <TableCell>{violation.id}</TableCell>
-                    <TableCell className="flex items-center gap-2 text-primary">
+                    <TableCell className="flex items-center gap-2 text-red-500">
                       {expandedEvents.includes(violation.event_name) ? (
                         <ChevronDown className="h-4 w-4" />
                       ) : (

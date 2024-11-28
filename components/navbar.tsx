@@ -22,19 +22,17 @@ import { createClientComponentClient } from "@supabase/auth-helpers-nextjs";
 import { useEffect, useState, useCallback } from "react";
 import { AddStoreModal } from "./add-store-modal";
 import { Store, Center } from "@/types";
+import { useStore } from "@/lib/StoreContext";
 
-type NavigationBarProps = {
-  onStoreSelect: (store: Store | null) => void;
-};
-
-export default function NavigationBar({ onStoreSelect }: NavigationBarProps) {
+export default function NavigationBar() {
   const [timeRange, setTimeRange] = React.useState("Last 7 Days");
   const [commonTimeline, setCommonTimeline] = React.useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const { selectedStore, setSelectedStore } = useStore();
 
   const supabase = createClientComponentClient();
 
@@ -54,7 +52,6 @@ export default function NavigationBar({ onStoreSelect }: NavigationBarProps) {
       setStores(storesData as Store[]);
       if (storesData.length > 0 && !selectedStore) {
         setSelectedStore(storesData[0] as Store);
-        onStoreSelect(storesData[0] as Store);
       }
     }
 
@@ -66,7 +63,7 @@ export default function NavigationBar({ onStoreSelect }: NavigationBarProps) {
 
     setLoading(false);
     setIsRefreshing(false);
-  }, [supabase, selectedStore, onStoreSelect]);
+  }, [supabase, selectedStore, setSelectedStore]);
 
   useEffect(() => {
     fetchData();
@@ -76,9 +73,8 @@ export default function NavigationBar({ onStoreSelect }: NavigationBarProps) {
     (newStore: Store) => {
       setStores((prevStores) => [...prevStores, newStore]);
       setSelectedStore(newStore);
-      onStoreSelect(newStore);
     },
-    [onStoreSelect]
+    [setSelectedStore]
   );
 
   return (
@@ -115,10 +111,7 @@ export default function NavigationBar({ onStoreSelect }: NavigationBarProps) {
             {stores.map((store) => (
               <DropdownMenuItem
                 key={store.store_id}
-                onSelect={() => {
-                  setSelectedStore(store);
-                  onStoreSelect(store);
-                }}
+                onSelect={() => setSelectedStore(store)}
               >
                 <span>{store.store_name}</span>
                 <span className="ml-auto text-xs text-muted-foreground">

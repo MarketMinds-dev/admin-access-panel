@@ -1,15 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
-import Link from "next/link";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import React from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import NavigationBar from "@/components/navbar";
-import AdminDashboard from "./page";
-import { Store } from "@/types";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
   items: {
@@ -19,10 +12,8 @@ interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 function Sidebar({ className, items, ...props }: SidebarProps) {
-  const pathname = usePathname();
-
   return (
-    <div className={cn("pb-12", className)} {...props}>
+    <div className={`pb-12 ${className}`} {...props}>
       <div className="space-y-4 py-4">
         <div className="px-3 py-2">
           <h2 className="mb-2 px-4 text-lg font-semibold tracking-tight">
@@ -30,14 +21,12 @@ function Sidebar({ className, items, ...props }: SidebarProps) {
           </h2>
           <div className="space-y-1">
             {items.map((item) => (
-              <Button
+              <button
                 key={item.href}
-                variant={pathname === item.href ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                asChild
+                className="w-full text-left px-4 py-2 hover:bg-gray-100 rounded-md"
               >
-                <Link href={item.href}>{item.title}</Link>
-              </Button>
+                {item.title}
+              </button>
             ))}
           </div>
         </div>
@@ -46,9 +35,11 @@ function Sidebar({ className, items, ...props }: SidebarProps) {
   );
 }
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
-  const [selectedStore, setSelectedStore] = useState<Store | null>(null);
-
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const sidebarNavItems = [
     {
       title: "Overview",
@@ -78,20 +69,14 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
-      <NavigationBar onStoreSelect={setSelectedStore} />
+      <NavigationBar />
       <div className="flex flex-1 overflow-hidden">
         <aside className="hidden w-64 border-r bg-gray-100/40 lg:block dark:bg-gray-800/40">
           <ScrollArea className="h-full">
             <Sidebar items={sidebarNavItems} className="p-4" />
           </ScrollArea>
         </aside>
-        <main className="flex-1 overflow-y-auto p-8">
-          {selectedStore ? (
-            <AdminDashboard selectedStore={selectedStore} />
-          ) : (
-            children
-          )}
-        </main>
+        <main className="flex-1 overflow-y-auto p-8">{children}</main>
       </div>
     </div>
   );
