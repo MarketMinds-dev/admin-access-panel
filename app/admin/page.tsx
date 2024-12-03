@@ -42,7 +42,9 @@ import {
 
 const AdminDashboard: React.FC = () => {
   const { selectedStore } = useStore();
-  const [customerData, setCustomerData] = useState<CustomerFootfall[]>([]);
+  const [customerData, setCustomerData] = useState<
+    { date: string; male: number; female: number }[]
+  >([]);
   const [employeeData, setEmployeeData] = useState<ProcessedEmployeeData[]>([]);
   const [employeeNames, setEmployeeNames] = useState<string[]>([]);
   const [violationsData, setViolationsData] = useState<CriticalViolation[]>([]);
@@ -110,8 +112,40 @@ const AdminDashboard: React.FC = () => {
         if (employeeFootfallData.error) throw employeeFootfallData.error;
         if (violations.error) throw violations.error;
 
-        setCustomerData(customerFootfallData.data);
+        // Process customer footfall data
+        const processedCustomerData: {
+          date: string;
+          male: number;
+          female: number;
+        }[] = [];
+        const dateMap = new Map<string, { male: number; female: number }>();
 
+        (customerFootfallData.data as CustomerFootfall[]).forEach((entry) => {
+          const date = entry.date;
+          if (!dateMap.has(date)) {
+            dateMap.set(date, { male: 0, female: 0 });
+          }
+
+          if (entry.gender === "Male") {
+            dateMap.get(date)!.male += entry.entries;
+          } else if (entry.gender === "Female") {
+            dateMap.get(date)!.female += entry.entries;
+          }
+        });
+
+        dateMap.forEach((value, key) => {
+          processedCustomerData.push({
+            date: key,
+            male: value.male,
+            female: value.female,
+          });
+        });
+
+        console.log("Processed Customer Data:", processedCustomerData);
+
+        setCustomerData(processedCustomerData);
+
+        // Process employee footfall data
         const processedData: ProcessedEmployeeData[] = [];
         const employeeSet = new Set<string>();
 
@@ -191,6 +225,7 @@ const AdminDashboard: React.FC = () => {
 
     fetchData();
   }, [supabase, selectedStore]);
+  console.log(customerData);
 
   if (!selectedStore) {
     return <div>Please select a store</div>;
@@ -234,7 +269,7 @@ const AdminDashboard: React.FC = () => {
       <div className="grid gap-4 md:grid-cols-2">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Customer Footfall</CardTitle>
+            <CardTitle>Customer Footfall by Gender</CardTitle>
             <Button variant="ghost" size="icon">
               <MoreVertical className="h-5 w-5" />
             </Button>
@@ -249,11 +284,25 @@ const AdminDashboard: React.FC = () => {
                   <Tooltip />
                   <Legend />
                   <Bar
-                    dataKey="entries"
-                    fill="#ff69b4"
-                    name="Entries"
+                    dataKey="male"
+                    stackId="gender"
+                    fill="hsl(var(--primary))"
+                    name="Male Customers"
                     label={
-                      showDataLabels ? { position: "top", fill: "#000" } : false
+                      showDataLabels
+                        ? { position: "top", fill: "hsl(var(--foreground))" }
+                        : false
+                    }
+                  />
+                  <Bar
+                    dataKey="female"
+                    stackId="gender"
+                    fill="red"
+                    name="Female Customers"
+                    label={
+                      showDataLabels
+                        ? { position: "top", fill: "hsl(var(--foreground))" }
+                        : false
                     }
                   />
                 </BarChart>
@@ -263,7 +312,9 @@ const AdminDashboard: React.FC = () => {
               <Checkbox
                 id="showLabels"
                 checked={showDataLabels}
-                onCheckedChange={() => setShowDataLabels(!showDataLabels)}
+                onCheckedChange={(checked) =>
+                  setShowDataLabels(checked as boolean)
+                }
               />
               <label htmlFor="showLabels" className="text-sm">
                 Show/Hide Data Labels

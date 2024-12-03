@@ -35,6 +35,7 @@ export type CustomerFootfall = {
   id: number;
   store_id: number;
   date: string;
+  gender: string;
   entries: number;
   created_at: string;
 };
