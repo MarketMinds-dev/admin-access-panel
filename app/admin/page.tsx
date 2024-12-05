@@ -41,7 +41,7 @@ import {
 } from "@/types";
 
 const AdminDashboard: React.FC = () => {
-  const { selectedStore } = useStore();
+  const { selectedStore, selectedDate } = useStore();
   const [customerData, setCustomerData] = useState<
     { date: string; male: number; female: number }[]
   >([]);
@@ -73,18 +73,46 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     async function fetchData() {
-      if (!selectedStore) return;
+      if (!selectedStore || !selectedDate) return;
 
       setLoading(true);
       setError(null);
 
       try {
+        let startDate: Date, endDate: Date;
+
+        // Determine date range based on selectedDate
+        if (selectedDate.toDateString() === new Date().toDateString()) {
+          // Today
+          startDate = new Date(selectedDate);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(selectedDate);
+          endDate.setHours(23, 59, 59, 999);
+        } else if (
+          selectedDate.getTime() >
+          Date.now() - 7 * 24 * 60 * 60 * 1000
+        ) {
+          // Last 7 days
+          startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+        } else {
+          // Last 30 days
+          startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date();
+          endDate.setHours(23, 59, 59, 999);
+        }
+
         const [customerFootfallData, employeeFootfallData, violations] =
           await Promise.all([
             supabase
               .from("customer_footfall")
               .select("*")
               .eq("store_id", selectedStore.store_id)
+              .gte("date", startDate.toISOString())
+              .lte("date", endDate.toISOString())
               .order("date", { ascending: true }),
             supabase
               .from("employee_footfall")
@@ -100,11 +128,15 @@ const AdminDashboard: React.FC = () => {
             `
               )
               .eq("store_id", selectedStore.store_id)
+              .gte("date", startDate.toISOString())
+              .lte("date", endDate.toISOString())
               .order("date", { ascending: true }),
             supabase
               .from("critical_violations")
               .select("*")
               .eq("store_id", selectedStore.store_id)
+              .gte("event_time", startDate.toISOString())
+              .lte("event_time", endDate.toISOString())
               .order("event_time", { ascending: false }),
           ]);
 
@@ -140,9 +172,6 @@ const AdminDashboard: React.FC = () => {
             female: value.female,
           });
         });
-
-        console.log("Processed Customer Data:", processedCustomerData);
-
         setCustomerData(processedCustomerData);
 
         // Process employee footfall data
@@ -224,8 +253,7 @@ const AdminDashboard: React.FC = () => {
     }
 
     fetchData();
-  }, [supabase, selectedStore]);
-  console.log(customerData);
+  }, [supabase, selectedStore, selectedDate]);
 
   if (!selectedStore) {
     return <div>Please select a store</div>;
@@ -236,7 +264,9 @@ const AdminDashboard: React.FC = () => {
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
         <span className="ml-2">
-          Loading data for {selectedStore.store_name}...
+          Loading data for {selectedStore.store_name} (
+          {selectedDate?.toLocaleDateString()} -{" "}
+          {new Date().toLocaleDateString()})...
         </span>
       </div>
     );
@@ -263,7 +293,9 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="p-4 space-y-4">
       <h1 className="text-2xl font-bold mb-4">
-        Dashboard for {selectedStore.store_name}
+        Dashboard for {selectedStore.store_name} (
+        {selectedDate?.toLocaleDateString()} - {new Date().toLocaleDateString()}
+        )
       </h1>
 
       <div className="grid gap-4 md:grid-cols-2">

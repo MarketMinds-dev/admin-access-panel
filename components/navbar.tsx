@@ -25,14 +25,15 @@ import { Store, Center } from "@/types";
 import { useStore } from "@/lib/StoreContext";
 
 export default function NavigationBar() {
-  const [timeRange, setTimeRange] = React.useState("Last 7 Days");
+  // Removed: const [timeRange, setTimeRange] = React.useState("Last 7 Days");
   const [commonTimeline, setCommonTimeline] = React.useState(false);
   const [stores, setStores] = useState<Store[]>([]);
   const [centers, setCenters] = useState<Center[]>([]);
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const { selectedStore, setSelectedStore } = useStore();
+  const { selectedStore, setSelectedStore, selectedDate, setSelectedDate } =
+    useStore();
 
   const supabase = createClientComponentClient();
 
@@ -130,21 +131,33 @@ export default function NavigationBar() {
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="gap-2">
               <Calendar className="h-4 w-4" />
-              {timeRange}
+              {selectedDate ? selectedDate.toLocaleDateString() : "All Data"}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem onSelect={() => setTimeRange("Last 24 Hours")}>
-              Last 24 Hours
+            <DropdownMenuItem onSelect={() => setSelectedDate(null)}>
+              All Data
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeRange("Last 7 Days")}>
+            <DropdownMenuItem onSelect={() => setSelectedDate(new Date())}>
+              Today
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onSelect={() => {
+                const date = new Date();
+                date.setDate(date.getDate() - 7);
+                setSelectedDate(date);
+              }}
+            >
               Last 7 Days
             </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeRange("Last 30 Days")}>
+            <DropdownMenuItem
+              onSelect={() => {
+                const date = new Date();
+                date.setDate(date.getDate() - 30);
+                setSelectedDate(date);
+              }}
+            >
               Last 30 Days
-            </DropdownMenuItem>
-            <DropdownMenuItem onSelect={() => setTimeRange("Custom Range")}>
-              Custom Range
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
