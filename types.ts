@@ -60,3 +60,10 @@ export type ViolationAnalysis = {
   no_employee: number;
   total_count: number;
 };
+
+//reports types
+
+export interface DateRange {
+  from: Date;
+  to: Date;
+}
