@@ -32,7 +32,7 @@ export default function AdminLayout({
 }) {
   return (
     <SidebarProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex w-full h-screen overflow-hidden">
         <StyledSidebar items={sidebarNavItems} />
         <SidebarInset className="flex flex-col flex-1">
           <NavigationBar />

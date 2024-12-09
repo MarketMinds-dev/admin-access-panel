@@ -28,7 +28,7 @@ export default function ReportsPage() {
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
-  const [selectedStore, setSelectedStore] = useState<string>("1"); // Assuming store_id 1 as default
+  const [selectedStore, setSelectedStore] = useState<string>("1");
 
   return (
     <div className="container mx-auto py-10">
